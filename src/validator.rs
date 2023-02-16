@@ -51,32 +51,29 @@ pub enum Validation {
 impl Validation {
     /// Whether it's a possible number.
     pub fn is_possible(&self) -> bool {
-        match *self {
-            Validation::IsPossible | Validation::IsPossibleLocalOnly => true,
-
-            _ => false,
-        }
+        matches!(
+            *self,
+            Validation::IsPossible | Validation::IsPossibleLocalOnly
+        )
     }
 
     /// Whether it's an invalid number.
     pub fn is_invalid(&self) -> bool {
-        match *self {
+        matches!(
+            *self,
             Validation::InvalidCountryCode
-            | Validation::TooShort
-            | Validation::InvalidLength
-            | Validation::TooLong => true,
-
-            _ => false,
-        }
+                | Validation::TooShort
+                | Validation::InvalidLength
+                | Validation::TooLong
+        )
     }
 
     /// Whether the length is invalid.
     pub fn is_invalid_length(&self) -> bool {
-        match *self {
-            Validation::TooShort | Validation::InvalidLength | Validation::TooLong => true,
-
-            _ => false,
-        }
+        matches!(
+            *self,
+            Validation::TooShort | Validation::InvalidLength | Validation::TooLong
+        )
     }
 }
 
@@ -93,7 +90,7 @@ pub fn is_viable<S: AsRef<str>>(string: S) -> bool {
 
 /// Check if the phone number is valid.
 pub fn is_valid(number: &PhoneNumber) -> bool {
-    is_valid_with(&*DATABASE, number)
+    is_valid_with(&DATABASE, number)
 }
 
 /// Check if the phone number is valid with the given `Database`.
@@ -154,7 +151,7 @@ pub fn source_for(
     code: u16,
     national: &str,
 ) -> Option<Either<country::Id, u16>> {
-    let regions = try_opt!(None; database.region(&code));
+    let regions = database.region(&code)?;
 
     if regions.len() == 1 {
         return if regions[0] == "001" {

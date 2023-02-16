@@ -107,7 +107,7 @@ pub fn ignore_plus(i: &str) -> IResult<&str, &str> {
 /// x302 and (530) 583-6985 x2303. We remove the second extension so that the
 /// first number is parsed correctly.
 pub fn extract(value: &str) -> IResult<&str, &str> {
-    let (mut result, start) = if let Some(index) = consts::VALID_START_CHAR.find(&value) {
+    let (mut result, start) = if let Some(index) = consts::VALID_START_CHAR.find(value) {
         (&value[index.start()..], index.start())
     } else {
         return Err(nom::Err::Error(make_error(value, ErrorKind::RegexpMatch)));
@@ -122,7 +122,7 @@ pub fn extract(value: &str) -> IResult<&str, &str> {
     }
 
     if result.is_empty() {
-        return Err(nom::Err::Error(make_error(value, ErrorKind::RegexpMatch)));
+        Err(nom::Err::Error(make_error(value, ErrorKind::RegexpMatch)))
     } else {
         Ok((&value[start + result.len()..], result))
     }
@@ -145,7 +145,7 @@ pub fn country_code<'a>(
         // from the number already.
         country::Source::Plus | country::Source::Idd | country::Source::Number => {
             if number.national.len() <= consts::MIN_LENGTH_FOR_NSN {
-                return Err(error::Parse::TooShortNsn.into());
+                return Err(error::Parse::TooShortNsn);
             }
 
             // If the prefix was already extracted, check it is valid.
@@ -153,7 +153,7 @@ pub fn country_code<'a>(
                 let prefix = number.prefix.as_ref().unwrap().parse()?;
 
                 if database.by_code(&prefix).is_none() {
-                    return Err(error::Parse::InvalidCountryCode.into());
+                    return Err(error::Parse::InvalidCountryCode);
                 } else {
                     return Ok(number);
                 }
@@ -161,7 +161,7 @@ pub fn country_code<'a>(
                 // Check the possible country code does not start with a 0 since those
                 // are invalid.
                 if number.national.starts_with('0') {
-                    return Err(error::Parse::InvalidCountryCode.into());
+                    return Err(error::Parse::InvalidCountryCode);
                 }
 
                 // Try to find the first available country code.
@@ -198,7 +198,7 @@ pub fn country_code<'a>(
         }
     }
 
-    Err(error::Parse::InvalidCountryCode.into())
+    Err(error::Parse::InvalidCountryCode)
 }
 
 /// Strip the IDD from a `Number`, update the country code source, and
@@ -343,7 +343,7 @@ pub fn normalize<'a>(mut number: Number<'a>, mappings: &FnvHashMap<char, char>) 
                         string.push(ch);
                     }
 
-                    while let Some((_, ch)) = chars.next() {
+                    for (_, ch) in chars.by_ref() {
                         if let Some(ch) = ch.as_dec_digit() {
                             string.push(ch);
                         } else if let Some(&ch) = mappings.get(&ch) {
@@ -390,7 +390,7 @@ pub trait AsCharExt {
 impl<T: AsChar> AsCharExt for T {
     fn is_wide_digit(self) -> bool {
         let ch = self.as_char();
-        ch >= '０' && ch <= '９'
+        ('０'..='９').contains(&ch)
     }
 
     fn is_punctuation(self) -> bool {
