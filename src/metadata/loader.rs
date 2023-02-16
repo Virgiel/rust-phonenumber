@@ -435,7 +435,9 @@ fn formats<R: BufRead>(
             Event::End(ref e) if e.name().0 == name => return Ok((national, international)),
 
             Event::End(ref e) => {
-                return Err(error::Metadata::MismatchedTag(str::from_utf8(e.name().0)?.into()).into())
+                return Err(
+                    error::Metadata::MismatchedTag(str::from_utf8(e.name().0)?.into()).into(),
+                )
             }
 
             Event::Eof => return Err(error::Metadata::UnexpectedEof.into()),
