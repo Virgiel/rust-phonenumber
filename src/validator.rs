@@ -97,14 +97,15 @@ pub fn is_valid(number: &PhoneNumber) -> bool {
 pub fn is_valid_with(database: &Database, number: &PhoneNumber) -> bool {
     let code = number.country().code();
     let national = number.national.to_string();
-    let source = try_opt!(false; source_for(database, code, &national));
-    let meta = try_opt!(false; match source {
-        Left(region) =>
-            database.by_id(region.as_ref()),
-
-        Right(code) =>
-            database.by_code(&code).and_then(|m| m.into_iter().next()),
-    });
+    let Some(source) = source_for(database, code, &national) else {
+        return false;
+    };
+    let Some(meta) = (match source {
+        Left(region) => database.by_id(region.as_ref()),
+        Right(code) => database.by_code(&code).and_then(|m| m.into_iter().next()),
+    }) else {
+        return false;
+    };
 
     number_type(meta, &national) != Type::Unknown
 }
